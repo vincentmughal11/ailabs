@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Badge } from "@/ui/components/Badge";
 import { Button } from "@/ui/components/Button";
 import { DropdownMenu } from "@/ui/components/DropdownMenu";
@@ -22,27 +22,110 @@ import { FeatherSearch } from "@subframe/core";
 import { FeatherSettings2 } from "@subframe/core";
 import { FeatherUser } from "@subframe/core";
 import * as SubframeCore from "@subframe/core";
+import ShareLeaderboardDialog from "@/ui/components/ShareLeaderboardDialog";
+
+interface Model {
+  id: string;
+  name: string;
+  displayName: string;
+  eloRating: number;
+  lastWeekElo: number;
+}
 
 function Leaderboard() {
+  const [models, setModels] = useState<Model[]>([]);
+  const [filteredModels, setFilteredModels] = useState<Model[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [loading, setLoading] = useState(true);
+  const [shareOpen, setShareOpen] = useState(false);
+  const shareUrl = "http://localhost:3000/leaderboard";
+
+  const handleExport = async () => {
+    try {
+      const res = await fetch('/api/models/export');
+      if (!res.ok) throw new Error('Export failed');
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'leaderboard.csv';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    fetchModels();
+  }, []);
+
+  useEffect(() => {
+    if (searchTerm.trim() === "") {
+      const sorted = [...models].sort((a, b) => 
+        sortOrder === "desc" ? b.eloRating - a.eloRating : a.eloRating - b.eloRating
+      );
+      setFilteredModels(sorted);
+    } else {
+      const filtered = models.filter(model => 
+        model.displayName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        model.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      const sorted = filtered.sort((a, b) => 
+        sortOrder === "desc" ? b.eloRating - a.eloRating : a.eloRating - b.eloRating
+      );
+      setFilteredModels(sorted);
+    }
+  }, [searchTerm, models, sortOrder]);
+
+  const fetchModels = async () => {
+    try {
+      const response = await fetch('/api/models');
+      if (response.ok) {
+        const data = await response.json();
+        setModels(data);
+        setFilteredModels(data);
+      }
+    } catch (error) {
+      console.error('Error fetching models:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <DefaultPageLayout>
+        <div className="container max-w-none flex h-full w-full flex-col items-center justify-center gap-6 bg-default-background py-12">
+          <div className="text-body font-body text-subtext-color">Loading leaderboard...</div>
+        </div>
+      </DefaultPageLayout>
+    );
+  }
+
   return (
+    <>
     <DefaultPageLayout>
       <div className="container max-w-none flex h-full w-full flex-col items-start gap-6 bg-default-background py-12">
         <div className="flex w-full flex-col items-start">
           <div className="flex w-full flex-wrap items-center gap-2 px-4 py-4">
-        <div className="flex grow shrink-0 basis-0 items-center gap-2">
-          <FeatherKanbanSquare className="text-heading-2 font-heading-2 text-default-font" />
-          <span className="text-heading-2 font-heading-2 text-default-font">
-            AILabs Leaderboard
-          </span>
-          <Badge>Current</Badge>
-        </div>
-        <Button
-          variant="brand-secondary"
-          onClick={(event: React.MouseEvent<HTMLButtonElement>) => {}}
-        >
-          Export
-        </Button>
-            <Button onClick={(event: React.MouseEvent<HTMLButtonElement>) => {}}>
+            <div className="flex grow shrink-0 basis-0 items-center gap-2">
+              <FeatherKanbanSquare className="text-heading-2 font-heading-2 text-default-font" />
+              <span className="text-heading-2 font-heading-2 text-default-font">
+                AILabs Leaderboard
+              </span>
+              <Badge>Current</Badge>
+            </div>
+            <Button
+              variant="brand-secondary"
+              onClick={handleExport}
+            >
+              Export
+            </Button>
+            <Button onClick={() => setShareOpen(true)}>
               Share
             </Button>
           </div>
@@ -56,8 +139,8 @@ function Leaderboard() {
               >
                 <TextField.Input
                   placeholder="Search"
-                  value=""
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => {}}
+                  value={searchTerm}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(event.target.value)}
                 />
               </TextField>
             </div>
@@ -106,10 +189,16 @@ function Leaderboard() {
                     asChild={true}
                   >
                     <DropdownMenu>
-                      <DropdownMenu.DropdownItem icon={<FeatherChevronUp />}>
+                      <DropdownMenu.DropdownItem 
+                        icon={<FeatherChevronUp />}
+                        onClick={() => setSortOrder("asc")}
+                      >
                         Ascending
                       </DropdownMenu.DropdownItem>
-                      <DropdownMenu.DropdownItem icon={<FeatherChevronDown />}>
+                      <DropdownMenu.DropdownItem 
+                        icon={<FeatherChevronDown />}
+                        onClick={() => setSortOrder("desc")}
+                      >
                         Descending
                       </DropdownMenu.DropdownItem>
                     </DropdownMenu>
@@ -156,244 +245,113 @@ function Leaderboard() {
               >
                 Customize
               </Button>
-        </div>
-      </div>
-    </div>
-    <div className="flex w-full flex-wrap items-start gap-4">
-      <div className="flex grow shrink-0 basis-0 flex-col items-start gap-4 rounded-md border border-solid border-neutral-border bg-default-background px-4 py-4 shadow-sm">
-        <span className="line-clamp-1 w-full text-caption-bold font-caption-bold text-subtext-color">
-          #1 model
-        </span>
-        <div className="flex w-full flex-col items-start gap-2">
-          <span className="text-heading-2 font-heading-2 text-default-font">
-            gemini 2.5-pro
-          </span>
-          <Badge variant="success" icon={<FeatherArrowUp />}>
-            13%
-          </Badge>
-        </div>
-      </div>
-      <div className="flex grow shrink-0 basis-0 flex-col items-start gap-4 rounded-md border border-solid border-neutral-border bg-default-background px-4 py-4 shadow-sm">
-        <span className="line-clamp-1 w-full text-caption-bold font-caption-bold text-subtext-color">
-          #2 model
-        </span>
-        <div className="flex w-full flex-col items-start gap-2">
-          <span className="text-heading-2 font-heading-2 text-default-font">
-            openai o3-mini
-          </span>
-          <Badge variant="success" icon={<FeatherArrowUp />}>
-            25%
-          </Badge>
-        </div>
-      </div>
-      <div className="flex grow shrink-0 basis-0 flex-col items-start gap-4 rounded-md border border-solid border-neutral-border bg-default-background px-4 py-4 shadow-sm">
-        <span className="line-clamp-1 w-full text-caption-bold font-caption-bold text-subtext-color">
-          #3 model
-        </span>
-        <div className="flex w-full flex-col items-start gap-2">
-          <span className="text-heading-2 font-heading-2 text-default-font">
-            claude sonnet-3.5
-          </span>
-          <Badge variant="error" icon={<FeatherArrowDown />}>
-            33%
-          </Badge>
-        </div>
-      </div>
-    </div>
-    <div className="flex w-full flex-col items-start gap-6">
-          <div className="flex w-full flex-col items-start gap-6 overflow-hidden overflow-x-auto">
-            <Table
-              header={
-                <Table.HeaderRow>
-                  <Table.HeaderCell>Model</Table.HeaderCell>
-                  <Table.HeaderCell>Elo</Table.HeaderCell>
-                  <Table.HeaderCell>Clarity</Table.HeaderCell>
-                  <Table.HeaderCell>Empathy</Table.HeaderCell>
-                  <Table.HeaderCell>Helpfulness</Table.HeaderCell>
-                  <Table.HeaderCell>Overall</Table.HeaderCell>
-                </Table.HeaderRow>
-              }
-            >
-              <Table.Row>
-                <Table.Cell>
-                  <span className="whitespace-nowrap text-body-bold font-body-bold text-default-font">
-                    gemini 2.5-pro
-                  </span>
-                </Table.Cell>
-                <Table.Cell>
-                  <div className="flex items-center gap-2">
-                    <FeatherChevronUp className="text-heading-3 font-heading-3 text-default-font" />
-                    <span className="whitespace-nowrap text-body-bold font-body-bold text-default-font">
-                      1520
-                    </span>
-                  </div>
-                </Table.Cell>
-                <Table.Cell>
-                  <span className="whitespace-nowrap text-body font-body text-neutral-500">
-                    7.3/10
-                  </span>
-                </Table.Cell>
-                <Table.Cell>
-                  <span className="whitespace-nowrap text-body font-body text-neutral-500">
-                    7.3/10
-                  </span>
-                </Table.Cell>
-                <Table.Cell>
-                  <span className="whitespace-nowrap text-body font-body text-neutral-500">
-                    7.3/10
-                  </span>
-                </Table.Cell>
-                <Table.Cell>
-                  <span className="whitespace-nowrap text-body font-body text-neutral-500">
-                    7.3/10
-                  </span>
-                </Table.Cell>
-              </Table.Row>
-              <Table.Row>
-                <Table.Cell>
-                  <span className="whitespace-nowrap text-body-bold font-body-bold text-default-font">
-                    openAI o3-mini
-                  </span>
-                </Table.Cell>
-                <Table.Cell>
-                  <div className="flex items-center gap-2">
-                    <FeatherChevronsUp className="text-heading-3 font-heading-3 text-default-font" />
-                    <span className="whitespace-nowrap text-body-bold font-body-bold text-default-font">
-                      1515
-                    </span>
-                  </div>
-                </Table.Cell>
-                <Table.Cell>
-                  <span className="whitespace-nowrap text-body font-body text-neutral-500">
-                    6.8/10
-                  </span>
-                </Table.Cell>
-                <Table.Cell>
-                  <span className="whitespace-nowrap text-body font-body text-neutral-500">
-                    6.8/10
-                  </span>
-                </Table.Cell>
-                <Table.Cell>
-                  <span className="whitespace-nowrap text-body font-body text-neutral-500">
-                    6.8/10
-                  </span>
-                </Table.Cell>
-                <Table.Cell>
-                  <span className="whitespace-nowrap text-body font-body text-neutral-500">
-                    6.8/10
-                  </span>
-                </Table.Cell>
-              </Table.Row>
-              <Table.Row>
-                <Table.Cell>
-                  <span className="whitespace-nowrap text-body-bold font-body-bold text-default-font">
-                    claude sonnet-3.5
-                  </span>
-                </Table.Cell>
-                <Table.Cell>
-                  <div className="flex items-center gap-2">
-                    <FeatherChevronRight className="text-heading-3 font-heading-3 text-default-font" />
-                    <span className="whitespace-nowrap text-body-bold font-body-bold text-default-font">
-                      1510
-                    </span>
-                  </div>
-                </Table.Cell>
-                <Table.Cell>
-                  <span className="whitespace-nowrap text-body font-body text-neutral-500">
-                    6.9/10
-                  </span>
-                </Table.Cell>
-                <Table.Cell>
-                  <span className="whitespace-nowrap text-body font-body text-neutral-500">
-                    6.9/10
-                  </span>
-                </Table.Cell>
-                <Table.Cell>
-                  <span className="whitespace-nowrap text-body font-body text-neutral-500">
-                    6.9/10
-                  </span>
-                </Table.Cell>
-                <Table.Cell>
-                  <span className="whitespace-nowrap text-body font-body text-neutral-500">
-                    6.9/10
-                  </span>
-                </Table.Cell>
-              </Table.Row>
-              <Table.Row>
-                <Table.Cell>
-                  <span className="whitespace-nowrap text-body-bold font-body-bold text-default-font">
-                    deepseek-v3
-                  </span>
-                </Table.Cell>
-                <Table.Cell>
-                  <div className="flex items-center gap-2">
-                    <FeatherChevronUp className="text-heading-3 font-heading-3 text-default-font" />
-                    <span className="whitespace-nowrap text-body-bold font-body-bold text-default-font">
-                      1490
-                    </span>
-                  </div>
-                </Table.Cell>
-                <Table.Cell>
-                  <span className="whitespace-nowrap text-body font-body text-neutral-500">
-                    5.7/10
-                  </span>
-                </Table.Cell>
-                <Table.Cell>
-                  <span className="whitespace-nowrap text-body font-body text-neutral-500">
-                    5.7/10
-                  </span>
-                </Table.Cell>
-                <Table.Cell>
-                  <span className="whitespace-nowrap text-body font-body text-neutral-500">
-                    5.7/10
-                  </span>
-                </Table.Cell>
-                <Table.Cell>
-                  <span className="whitespace-nowrap text-body font-body text-neutral-500">
-                    5.7/10
-                  </span>
-                </Table.Cell>
-              </Table.Row>
-              <Table.Row>
-                <Table.Cell>
-                  <span className="whitespace-nowrap text-body-bold font-body-bold text-default-font">
-                    grok-4-heavy
-                  </span>
-                </Table.Cell>
-                <Table.Cell>
-                  <div className="flex items-center gap-2">
-                    <FeatherChevronsDown className="text-heading-3 font-heading-3 text-default-font" />
-                    <span className="whitespace-nowrap text-body-bold font-body-bold text-default-font">
-                      1487
-                    </span>
-                  </div>
-                </Table.Cell>
-                <Table.Cell>
-                  <span className="whitespace-nowrap text-body font-body text-neutral-500">
-                    6.2/10
-                  </span>
-                </Table.Cell>
-                <Table.Cell>
-                  <span className="whitespace-nowrap text-body font-body text-neutral-500">
-                    6.2/10
-                  </span>
-                </Table.Cell>
-                <Table.Cell>
-                  <span className="whitespace-nowrap text-body font-body text-neutral-500">
-                    6.2/10
-                  </span>
-                </Table.Cell>
-                <Table.Cell>
-                  <span className="whitespace-nowrap text-body font-body text-neutral-500">
-                    6.2/10
-                  </span>
-                </Table.Cell>
-              </Table.Row>
-            </Table>
+            </div>
           </div>
+        </div>
+        <div className="flex w-full flex-wrap items-start gap-4">
+          {filteredModels.slice(0, 3).map((model, index) => (
+            <div key={model.id} className="flex grow shrink-0 basis-0 flex-col items-start gap-4 rounded-md border border-solid border-neutral-border bg-default-background px-4 py-4 shadow-sm">
+              <span className="line-clamp-1 w-full text-caption-bold font-caption-bold text-subtext-color">
+                #{index + 1} model
+              </span>
+              <div className="flex w-full flex-col items-start gap-2">
+                <span className="text-heading-2 font-heading-2 text-default-font">
+                  {model.displayName}
+                </span>
+                {(() => {
+                  const delta = model.eloRating - model.lastWeekElo;
+                  const positive = delta > 0;
+                  const zero = delta === 0;
+                  const variant = positive ? "success" : zero ? "neutral" : "error";
+                  const icon = positive ? <FeatherArrowUp /> : zero ? <FeatherChevronRight /> : <FeatherArrowDown />;
+                  return (
+                    <Badge variant={variant} icon={icon}>
+                      {positive ? `+${delta}` : `${delta}`}
+                    </Badge>
+                  );
+                })()}
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="flex w-full flex-col items-start gap-6">
+          {filteredModels.length === 0 && searchTerm.trim() !== "" ? (
+            <div className="flex w-full flex-col items-center justify-center gap-4 py-12">
+              <span className="text-body font-body text-subtext-color">
+                No models found matching "{searchTerm}"
+              </span>
+              <Button 
+                variant="neutral-secondary"
+                onClick={() => setSearchTerm("")}
+              >
+                Clear search
+              </Button>
+            </div>
+          ) : (
+            <div className="flex w-full flex-col items-start gap-6 overflow-hidden overflow-x-auto">
+              <Table
+                header={
+                  <Table.HeaderRow>
+                    <Table.HeaderCell>Model</Table.HeaderCell>
+                    <Table.HeaderCell>Elo</Table.HeaderCell>
+                    <Table.HeaderCell>Clarity</Table.HeaderCell>
+                    <Table.HeaderCell>Empathy</Table.HeaderCell>
+                    <Table.HeaderCell>Helpfulness</Table.HeaderCell>
+                    <Table.HeaderCell>Overall</Table.HeaderCell>
+                  </Table.HeaderRow>
+                }
+              >
+                {filteredModels.map((model, index) => (
+                  <Table.Row key={model.id}>
+                    <Table.Cell>
+                      <span className="whitespace-nowrap text-body-bold font-body-bold text-default-font">
+                        {model.displayName}
+                      </span>
+                    </Table.Cell>
+                    <Table.Cell>
+                      <div className="flex items-center gap-2">
+                        {(() => {
+                          const delta = model.eloRating - model.lastWeekElo;
+                          const positive = delta > 0;
+                          const zero = delta === 0;
+                          const icon = positive ? <FeatherArrowUp /> : zero ? <FeatherChevronRight /> : <FeatherArrowDown />;
+                          return icon;
+                        })()}
+                        <span className="whitespace-nowrap text-body-bold font-body-bold text-default-font">
+                          {model.eloRating}
+                        </span>
+                      </div>
+                    </Table.Cell>
+                    <Table.Cell>
+                      <span className="whitespace-nowrap text-body font-body text-neutral-500">
+                        {(model.eloRating / 200).toFixed(1)}/10
+                      </span>
+                    </Table.Cell>
+                    <Table.Cell>
+                      <span className="whitespace-nowrap text-body font-body text-neutral-500">
+                        {(model.eloRating / 200).toFixed(1)}/10
+                      </span>
+                    </Table.Cell>
+                    <Table.Cell>
+                      <span className="whitespace-nowrap text-body font-body text-neutral-500">
+                        {(model.eloRating / 200).toFixed(1)}/10
+                      </span>
+                    </Table.Cell>
+                    <Table.Cell>
+                      <span className="whitespace-nowrap text-body font-body text-neutral-500">
+                        {(model.eloRating / 200).toFixed(1)}/10
+                      </span>
+                    </Table.Cell>
+                  </Table.Row>
+                ))}
+              </Table>
+            </div>
+          )}
         </div>
       </div>
     </DefaultPageLayout>
+    <ShareLeaderboardDialog open={shareOpen} onOpenChange={setShareOpen} shareUrl={shareUrl} />
+    </>
   );
 }
 

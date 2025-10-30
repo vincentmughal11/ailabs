@@ -1,6 +1,7 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ChatSelect } from "@/ui/components/ChatSelect";
 import { ChatSelectItem } from "@/ui/components/ChatSelectItem";
 import { IconButton } from "@/ui/components/IconButton";
@@ -16,7 +17,115 @@ import { FeatherPartyPopper } from "@subframe/core";
 import { FeatherSkull } from "@subframe/core";
 import * as SubframeCore from "@subframe/core";
 
+interface Story {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  tags: string[];
+  firstPrompt: string;
+  icon?: string;
+}
+
 function Home() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [stories, setStories] = useState<Story[]>([]);
+  const [selectedStory, setSelectedStory] = useState<Story | null>(null);
+  const [inputValue, setInputValue] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    fetchFeaturedStories();
+  }, []);
+
+
+  useEffect(() => {
+    const storyId = searchParams.get('story');
+    console.log('🔍 URL param check:', {
+      storyId,
+      storiesLoaded: stories.length,
+      searchParams: searchParams.toString()
+    });
+    
+    if (storyId && stories.length > 0) {
+      const story = stories.find(s => s.id === storyId);
+      console.log('📚 Story lookup:', {
+        found: !!story,
+        story: story ? {
+          id: story.id,
+          title: story.title,
+          firstPrompt: story.firstPrompt,
+          hasFirstPrompt: !!story.firstPrompt
+        } : null
+      });
+      
+      if (story) {
+        setSelectedStory(story);
+        setInputValue(story.firstPrompt);
+        console.log('✅ Story prefilled:', story.firstPrompt);
+      }
+    }
+  }, [searchParams, stories]);
+
+  const fetchFeaturedStories = async () => {
+    try {
+      const response = await fetch('/api/stories');
+      if (response.ok) {
+        const data = await response.json();
+        setStories(data); // Load ALL stories for URL param lookup
+        console.log('📚 Loaded all stories:', data.length);
+      }
+    } catch (error) {
+      console.error('Error fetching stories:', error);
+    }
+  };
+
+  const handleStoryClick = async (story: Story) => {
+    console.log('🏠 Homepage story button clicked:', {
+      id: story.id,
+      title: story.title,
+      firstPrompt: story.firstPrompt,
+      hasFirstPrompt: !!story.firstPrompt
+    });
+    setSelectedStory(story);
+    setInputValue(story.firstPrompt);
+  };
+
+  const handleSubmit = async () => {
+    if (!inputValue.trim()) return;
+    
+    setLoading(true);
+    try {
+      // Generate a simple user ID (in a real app, this would be from auth)
+      const userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Create session (without waiting for LLM responses)
+      const response = await fetch('/api/sessions/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          storyId: selectedStory?.id || stories[0]?.id,
+          userId
+        }),
+      });
+
+      if (response.ok) {
+        const { sessionId } = await response.json();
+        // Navigate immediately to chat page
+        router.push(`/chat/${sessionId}`);
+      } else {
+        console.error('Failed to create session');
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error('Error creating session:', error);
+      setLoading(false);
+    }
+    // Don't set loading to false here - we're navigating away
+  };
   return (
     <DefaultPageLayout>
       <div className="flex h-full w-full flex-col items-start">
@@ -86,51 +195,46 @@ function Home() {
                 <TextFieldUnstyled className="h-auto w-full flex-none">
                   <TextFieldUnstyled.Input
                     placeholder="Click on a story below to start your journey..."
-                    value=""
-                    onChange={(
-                      event: React.ChangeEvent<HTMLInputElement>
-                    ) => {}}
+                    value={inputValue}
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => 
+                      setInputValue(event.target.value)
+                    }
+                    onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>) => {
+                      if (event.key === 'Enter') {
+                        handleSubmit();
+                      }
+                    }}
                   />
                 </TextFieldUnstyled>
               </div>
               <IconButton
                 variant="brand-primary"
                 icon={<FeatherArrowUp />}
-                onClick={(event: React.MouseEvent<HTMLButtonElement>) => {}}
+                onClick={handleSubmit}
+                disabled={loading || !inputValue.trim()}
               />
             </div>
-            {/* Should be a ticker */}
+            {/* Story buttons */}
             <div className="flex grow shrink-0 basis-0 flex-wrap items-center justify-center gap-2">
-              <div className="flex items-center gap-2 self-stretch rounded-full border border-solid border-neutral-border bg-default-background px-3 py-2 shadow-sm">
-                <FeatherPartyPopper className="text-body-bold font-body-bold text-brand-500" />
-                <span className="line-clamp-2 grow shrink-0 basis-0 text-caption font-caption text-subtext-color">
-                  Awkward coworker party
-                </span>
-              </div>
-              <div className="flex items-center gap-2 self-stretch rounded-full border border-solid border-neutral-border bg-default-background px-3 py-2 shadow-sm">
-                <FeatherMessageCircle className="text-body-bold font-body-bold text-error-500" />
-                <span className="line-clamp-2 grow shrink-0 basis-0 text-caption font-caption text-subtext-color">
-                  Weird text from ex
-                </span>
-              </div>
-              <div className="flex items-center gap-2 self-stretch rounded-full border border-solid border-neutral-border bg-default-background px-3 py-2 shadow-sm">
-                <FeatherBadgeX className="text-body-bold font-body-bold text-warning-500" />
-                <span className="line-clamp-2 grow shrink-0 basis-0 text-caption font-caption text-subtext-color">
-                  Hurtful message from friend
-                </span>
-              </div>
-              <div className="flex items-center gap-2 self-stretch rounded-full border border-solid border-neutral-border bg-default-background px-3 py-2 shadow-sm">
-                <FeatherSkull className="text-body-bold font-body-bold text-success-600" />
-                <span className="line-clamp-2 grow shrink-0 basis-0 text-caption font-caption text-subtext-color">
-                  Relative dies
-                </span>
-              </div>
-              <div className="flex items-center gap-2 self-stretch rounded-full border border-solid border-neutral-border bg-default-background px-3 py-2 shadow-sm">
-                <FeatherBook className="text-body-bold font-body-bold text-neutral-500" />
-                <span className="line-clamp-2 grow shrink-0 basis-0 text-caption font-caption text-subtext-color">
-                  Teacher issues
-                </span>
-              </div>
+              {stories.slice(0, 5).map((story, index) => {
+                const icons = [FeatherPartyPopper, FeatherMessageCircle, FeatherBadgeX, FeatherSkull, FeatherBook];
+                const colors = ['text-brand-500', 'text-error-500', 'text-warning-500', 'text-success-600', 'text-neutral-500'];
+                const IconComponent = icons[index % icons.length];
+                const colorClass = colors[index % colors.length];
+                
+                return (
+                  <div 
+                    key={story.id}
+                    className="flex items-center gap-2 self-stretch rounded-full border border-solid border-neutral-border bg-default-background px-3 py-2 shadow-sm cursor-pointer hover:bg-neutral-50 transition-colors"
+                    onClick={() => handleStoryClick(story)}
+                  >
+                    <IconComponent className={`text-body-bold font-body-bold ${colorClass}`} />
+                    <span className="line-clamp-2 grow shrink-0 basis-0 text-caption font-caption text-subtext-color">
+                      {story.title}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>

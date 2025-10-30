@@ -5,7 +5,7 @@
  * Sidebar rail with icons — https://app.subframe.com/c0ba55092608/library?component=Sidebar+rail+with+icons_0d7efe0e-8762-46f5-b399-9f6d329e13b9
  */
 
-import React from "react";
+import React, { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { FeatherBarChart2 } from "@subframe/core";
 import { FeatherBook } from "@subframe/core";
@@ -13,6 +13,7 @@ import { FeatherHome } from "@subframe/core";
 import { FeatherSend } from "@subframe/core";
 import { SidebarRailWithIcons } from "../components/SidebarRailWithIcons";
 import * as SubframeUtils from "../utils";
+import ShareLeaderboardDialog from "@/ui/components/ShareLeaderboardDialog";
 
 interface DefaultPageLayoutRootProps
   extends React.HTMLAttributes<HTMLDivElement> {
@@ -29,6 +30,7 @@ const DefaultPageLayoutRoot = React.forwardRef<
 ) {
   const router = useRouter();
   const pathname = usePathname();
+  const [shareOpen, setShareOpen] = useState(false);
 
   const handleNavigation = (path: string) => {
     router.push(path);
@@ -53,8 +55,8 @@ const DefaultPageLayoutRoot = React.forwardRef<
           </div>
         }
         footer={
-          <SidebarRailWithIcons.NavItem icon={<FeatherSend />}>
-            Share
+          <SidebarRailWithIcons.NavItem icon={<FeatherSend />} onClick={() => setShareOpen(true)}>
+            Share this website
           </SidebarRailWithIcons.NavItem>
         }
       >
@@ -85,6 +87,13 @@ const DefaultPageLayoutRoot = React.forwardRef<
           {children}
         </div>
       ) : null}
+      <ShareLeaderboardDialog 
+        open={shareOpen}
+        onOpenChange={setShareOpen}
+        shareUrl={"http://localhost:3000"}
+        title={"Share AILabs"}
+        subtitle={"Share this website"}
+      />
     </div>
   );
 });

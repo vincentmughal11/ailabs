@@ -1,0 +1,120 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Story {
+  id          String    @id @default(uuid())
+  title       String
+  description String
+  category    String
+  tags        String[]
+  firstPrompt String    @map("first_prompt")
+  icon        String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  sessions    Session[]
+}
+
+model Model {
+  id            String    @id @default(uuid())
+  name          String    @unique
+  displayName   String    @map("display_name")
+  eloRating     Int       @default(1500) @map("elo_rating")
+  lastWeekElo   Int       @default(1500) @map("last_week_elo")
+  apiEndpoint   String?   @map("api_endpoint")
+  apiKeyEnvVar  String?   @map("api_key_env_var")
+  sessionsAsA   Session[] @relation("ModelA")
+  sessionsAsB   Session[] @relation("ModelB")
+  votesWon      Vote[]    @relation("WinnerModel")
+  votesLost     Vote[]    @relation("LoserModel")
+}
+
+model Session {
+  id          String        @id @default(uuid())
+  userId      String        @map("user_id")
+  storyId     String        @map("story_id")
+  modelAId    String        @map("model_a_id")
+  modelBId    String        @map("model_b_id")
+  status      SessionStatus @default(IN_PROGRESS)
+  startedAt   DateTime      @default(now()) @map("started_at")
+  completedAt DateTime?     @map("completed_at")
+  
+  story       Story         @relation(fields: [storyId], references: [id])
+  modelA      Model         @relation("ModelA", fields: [modelAId], references: [id])
+  modelB      Model         @relation("ModelB", fields: [modelBId], references: [id])
+  turns       Turn[]
+  votes       Vote[]
+  reports     Report[]
+}
+
+model Turn {
+  id                   String    @id @default(uuid())
+  sessionId            String    @map("session_id")
+  turnNumber           Int       @map("turn_number")
+  userPrompt           String    @map("user_prompt")
+  modelAResponse       String    @map("model_a_response")
+  modelBResponse       String    @map("model_b_response")
+  vote                 VoteType?
+  nextChoices          Json?     @map("next_choices")
+  selectedChoiceIndex  Int?      @map("selected_choice_index")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  
+  session              Session   @relation(fields: [sessionId], references: [id])
+  votes                Vote[]
+  reports              Report[]
+}
+
+model Vote {
+  id             String   @id @default(uuid())
+  sessionId      String   @map("session_id")
+  turnId         String   @map("turn_id")
+  winnerModelId  String?  @map("winner_model_id")
+  loserModelId   String?  @map("loser_model_id")
+  isTie          Boolean  @default(false) @map("is_tie")
+  createdAt      DateTime @default(now()) @map("created_at")
+  
+  session        Session  @relation(fields: [sessionId], references: [id])
+  turn           Turn     @relation(fields: [turnId], references: [id])
+  winnerModel    Model?   @relation("WinnerModel", fields: [winnerModelId], references: [id])
+  loserModel     Model?   @relation("LoserModel", fields: [loserModelId], references: [id])
+}
+
+enum SessionStatus {
+  IN_PROGRESS
+  COMPLETED
+  ABANDONED
+}
+
+enum VoteType {
+  MODEL_A
+  MODEL_B
+  TIE
+}
+
+enum ModelSide {
+  MODEL_A
+  MODEL_B
+  UNKNOWN
+}
+
+model Report {
+  id        String    @id @default(uuid())
+  sessionId String    @map("session_id")
+  turnId    String    @map("turn_id")
+  model     ModelSide
+  reason    String
+  details   String
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  modelAName      String   @map("model_a_name") @default("")
+  modelBName      String   @map("model_b_name") @default("")
+  modelAResponse  String   @map("model_a_response") @default("")
+  modelBResponse  String   @map("model_b_response") @default("")
+
+  session   Session   @relation(fields: [sessionId], references: [id])
+  turn      Turn      @relation(fields: [turnId], references: [id])
+}

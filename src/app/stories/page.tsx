@@ -1,6 +1,7 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/ui/components/Button";
 import { IconButton } from "@/ui/components/IconButton";
 import { LinkButton } from "@/ui/components/LinkButton";
@@ -10,7 +11,60 @@ import { FeatherRocket } from "@subframe/core";
 import { FeatherUser } from "@subframe/core";
 import { FeatherZap } from "@subframe/core";
 
+interface Story {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  tags: string[];
+  firstPrompt: string;
+  icon?: string;
+}
+
 function Stories() {
+  const router = useRouter();
+  const [stories, setStories] = useState<Story[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchStories();
+  }, []);
+
+  const fetchStories = async () => {
+    try {
+      const response = await fetch('/api/stories');
+      if (response.ok) {
+        const data = await response.json();
+        setStories(data);
+      }
+    } catch (error) {
+      console.error('Error fetching stories:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleStoryClick = (story: Story) => {
+    console.log('📖 Story clicked:', {
+      id: story.id,
+      title: story.title,
+      firstPrompt: story.firstPrompt,
+      hasFirstPrompt: !!story.firstPrompt
+    });
+    // Navigate to homepage with story data
+    router.push(`/?story=${story.id}`);
+  };
+
+  if (loading) {
+    return (
+      <DefaultPageLayout>
+        <div className="container max-w-none flex h-full w-full flex-col items-center justify-center gap-6 bg-default-background py-12">
+          <div className="text-body font-body text-subtext-color">Loading stories...</div>
+        </div>
+      </DefaultPageLayout>
+    );
+  }
+
   return (
     <DefaultPageLayout>
       <div className="container max-w-none flex h-full w-full flex-col items-start gap-6 bg-default-background py-12">
@@ -50,363 +104,48 @@ function Stories() {
               size="small"
               onClick={(event: React.MouseEvent<HTMLButtonElement>) => {}}
             >
-              12 stories
+              {stories.length} stories
             </LinkButton>
           </div>
         </div>
         <div className="flex flex-col items-start gap-4">
-          <div className="flex items-start gap-4">
-            <div className="flex grow shrink-0 basis-0 flex-col items-start gap-6 self-stretch rounded-md border border-solid border-neutral-border bg-default-background px-4 py-4 shadow-sm">
-              <div className="flex w-full grow shrink-0 basis-0 flex-col items-start gap-2">
-                <span className="text-body-bold font-body-bold text-default-font">
-                  How do I change the theme of my UI?
-                </span>
-                <span className="text-caption font-caption text-subtext-color">
-                  I would like to update the colors, text, and look and feel of
-                  my interface to something else using a theme. I was wondering
-                  where I go to find more themes.
-                </span>
-              </div>
-              <div className="flex w-full grow shrink-0 basis-0 items-start gap-4">
-                <span className="text-caption font-caption text-subtext-color">
-                  1 month ago
-                </span>
-                <div className="flex items-center gap-1">
-                  <FeatherUser className="text-caption font-caption text-subtext-color" />
-                  <span className="text-caption font-caption text-subtext-color">
-                    253
-                  </span>
+          {Array.from({ length: Math.ceil(stories.length / 3) }, (_, rowIndex) => (
+            <div key={rowIndex} className="flex items-start gap-4">
+              {stories.slice(rowIndex * 3, (rowIndex + 1) * 3).map((story) => (
+                <div 
+                  key={story.id}
+                  className="flex grow shrink-0 basis-0 flex-col items-start gap-6 self-stretch rounded-md border border-solid border-neutral-border bg-default-background px-4 py-4 shadow-sm cursor-pointer hover:bg-neutral-50 transition-colors"
+                  onClick={() => handleStoryClick(story)}
+                >
+                  <div className="flex w-full grow shrink-0 basis-0 flex-col items-start gap-2">
+                    <span className="text-body-bold font-body-bold text-default-font">
+                      {story.title}
+                    </span>
+                    <span className="text-caption font-caption text-subtext-color">
+                      {story.description}
+                    </span>
+                  </div>
+                  <div className="flex w-full grow shrink-0 basis-0 items-start gap-4">
+                    <span className="text-caption font-caption text-subtext-color">
+                      {story.category}
+                    </span>
+                    <div className="flex items-center gap-1">
+                      <FeatherUser className="text-caption font-caption text-subtext-color" />
+                      <span className="text-caption font-caption text-subtext-color">
+                        {story.tags.length} tags
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <FeatherHeart className="text-caption font-caption text-subtext-color" />
+                      <span className="text-caption font-caption text-subtext-color">
+                        Start
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1">
-                  <FeatherHeart className="text-caption font-caption text-subtext-color" />
-                  <span className="text-caption font-caption text-subtext-color">
-                    4
-                  </span>
-                </div>
-              </div>
+              ))}
             </div>
-            <div className="flex grow shrink-0 basis-0 flex-col items-start gap-6 self-stretch rounded-md border border-solid border-neutral-border bg-default-background px-4 py-4 shadow-sm">
-              <div className="flex w-full grow shrink-0 basis-0 flex-col items-start gap-2">
-                <span className="text-body-bold font-body-bold text-default-font">
-                  How do I change the theme of my UI?
-                </span>
-                <span className="text-caption font-caption text-subtext-color">
-                  I would like to update the colors, text, and look and feel of
-                  my interface to something else using a theme. I was wondering
-                  where I go to find more themes.
-                </span>
-              </div>
-              <div className="flex w-full grow shrink-0 basis-0 items-start gap-4">
-                <span className="text-caption font-caption text-subtext-color">
-                  1 month ago
-                </span>
-                <div className="flex items-center gap-1">
-                  <FeatherUser className="text-caption font-caption text-subtext-color" />
-                  <span className="text-caption font-caption text-subtext-color">
-                    253
-                  </span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <FeatherHeart className="text-caption font-caption text-subtext-color" />
-                  <span className="text-caption font-caption text-subtext-color">
-                    4
-                  </span>
-                </div>
-              </div>
-            </div>
-            <div className="flex grow shrink-0 basis-0 flex-col items-start gap-6 self-stretch rounded-md border border-solid border-neutral-border bg-default-background px-4 py-4 shadow-sm">
-              <div className="flex w-full grow shrink-0 basis-0 flex-col items-start gap-2">
-                <span className="text-body-bold font-body-bold text-default-font">
-                  What is the best way to manage state in React?
-                </span>
-                <span className="text-caption font-caption text-subtext-color">
-                  I&#39;m a beginner with React and I&#39;m confused about state
-                  management. Should I use context, Redux, or something else?
-                </span>
-              </div>
-              <div className="flex w-full grow shrink-0 basis-0 items-start gap-4">
-                <span className="text-caption font-caption text-subtext-color">
-                  3 days ago
-                </span>
-                <div className="flex items-center gap-1">
-                  <FeatherUser className="text-caption font-caption text-subtext-color" />
-                  <span className="text-caption font-caption text-subtext-color">
-                    143
-                  </span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <FeatherHeart className="text-caption font-caption text-subtext-color" />
-                  <span className="text-caption font-caption text-subtext-color">
-                    6
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="flex items-start gap-4">
-            <div className="flex grow shrink-0 basis-0 flex-col items-start gap-6 self-stretch rounded-md border border-solid border-neutral-border bg-default-background px-4 py-4 shadow-sm">
-              <div className="flex w-full grow shrink-0 basis-0 flex-col items-start gap-2">
-                <span className="text-body-bold font-body-bold text-default-font">
-                  How do I change the theme of my UI?
-                </span>
-                <span className="text-caption font-caption text-subtext-color">
-                  I would like to update the colors, text, and look and feel of
-                  my interface to something else using a theme. I was wondering
-                  where I go to find more themes.
-                </span>
-              </div>
-              <div className="flex w-full grow shrink-0 basis-0 items-start gap-4">
-                <span className="text-caption font-caption text-subtext-color">
-                  1 month ago
-                </span>
-                <div className="flex items-center gap-1">
-                  <FeatherUser className="text-caption font-caption text-subtext-color" />
-                  <span className="text-caption font-caption text-subtext-color">
-                    253
-                  </span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <FeatherHeart className="text-caption font-caption text-subtext-color" />
-                  <span className="text-caption font-caption text-subtext-color">
-                    4
-                  </span>
-                </div>
-              </div>
-            </div>
-            <div className="flex grow shrink-0 basis-0 flex-col items-start gap-6 self-stretch rounded-md border border-solid border-neutral-border bg-default-background px-4 py-4 shadow-sm">
-              <div className="flex w-full grow shrink-0 basis-0 flex-col items-start gap-2">
-                <span className="text-body-bold font-body-bold text-default-font">
-                  How do I change the theme of my UI?
-                </span>
-                <span className="text-caption font-caption text-subtext-color">
-                  I would like to update the colors, text, and look and feel of
-                  my interface to something else using a theme. I was wondering
-                  where I go to find more themes.
-                </span>
-              </div>
-              <div className="flex w-full grow shrink-0 basis-0 items-start gap-4">
-                <span className="text-caption font-caption text-subtext-color">
-                  1 month ago
-                </span>
-                <div className="flex items-center gap-1">
-                  <FeatherUser className="text-caption font-caption text-subtext-color" />
-                  <span className="text-caption font-caption text-subtext-color">
-                    253
-                  </span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <FeatherHeart className="text-caption font-caption text-subtext-color" />
-                  <span className="text-caption font-caption text-subtext-color">
-                    4
-                  </span>
-                </div>
-              </div>
-            </div>
-            <div className="flex grow shrink-0 basis-0 flex-col items-start gap-6 self-stretch rounded-md border border-solid border-neutral-border bg-default-background px-4 py-4 shadow-sm">
-              <div className="flex w-full grow shrink-0 basis-0 flex-col items-start gap-2">
-                <span className="text-body-bold font-body-bold text-default-font">
-                  What is the best way to manage state in React?
-                </span>
-                <span className="text-caption font-caption text-subtext-color">
-                  I&#39;m a beginner with React and I&#39;m confused about state
-                  management. Should I use context, Redux, or something else?
-                </span>
-              </div>
-              <div className="flex w-full grow shrink-0 basis-0 items-start gap-4">
-                <span className="text-caption font-caption text-subtext-color">
-                  3 days ago
-                </span>
-                <div className="flex items-center gap-1">
-                  <FeatherUser className="text-caption font-caption text-subtext-color" />
-                  <span className="text-caption font-caption text-subtext-color">
-                    143
-                  </span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <FeatherHeart className="text-caption font-caption text-subtext-color" />
-                  <span className="text-caption font-caption text-subtext-color">
-                    6
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="flex items-start gap-4">
-            <div className="flex grow shrink-0 basis-0 flex-col items-start gap-6 self-stretch rounded-md border border-solid border-neutral-border bg-default-background px-4 py-4 shadow-sm">
-              <div className="flex w-full grow shrink-0 basis-0 flex-col items-start gap-2">
-                <span className="text-body-bold font-body-bold text-default-font">
-                  How do I change the theme of my UI?
-                </span>
-                <span className="text-caption font-caption text-subtext-color">
-                  I would like to update the colors, text, and look and feel of
-                  my interface to something else using a theme. I was wondering
-                  where I go to find more themes.
-                </span>
-              </div>
-              <div className="flex w-full grow shrink-0 basis-0 items-start gap-4">
-                <span className="text-caption font-caption text-subtext-color">
-                  1 month ago
-                </span>
-                <div className="flex items-center gap-1">
-                  <FeatherUser className="text-caption font-caption text-subtext-color" />
-                  <span className="text-caption font-caption text-subtext-color">
-                    253
-                  </span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <FeatherHeart className="text-caption font-caption text-subtext-color" />
-                  <span className="text-caption font-caption text-subtext-color">
-                    4
-                  </span>
-                </div>
-              </div>
-            </div>
-            <div className="flex grow shrink-0 basis-0 flex-col items-start gap-6 self-stretch rounded-md border border-solid border-neutral-border bg-default-background px-4 py-4 shadow-sm">
-              <div className="flex w-full grow shrink-0 basis-0 flex-col items-start gap-2">
-                <span className="text-body-bold font-body-bold text-default-font">
-                  How do I change the theme of my UI?
-                </span>
-                <span className="text-caption font-caption text-subtext-color">
-                  I would like to update the colors, text, and look and feel of
-                  my interface to something else using a theme. I was wondering
-                  where I go to find more themes.
-                </span>
-              </div>
-              <div className="flex w-full grow shrink-0 basis-0 items-start gap-4">
-                <span className="text-caption font-caption text-subtext-color">
-                  1 month ago
-                </span>
-                <div className="flex items-center gap-1">
-                  <FeatherUser className="text-caption font-caption text-subtext-color" />
-                  <span className="text-caption font-caption text-subtext-color">
-                    253
-                  </span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <FeatherHeart className="text-caption font-caption text-subtext-color" />
-                  <span className="text-caption font-caption text-subtext-color">
-                    4
-                  </span>
-                </div>
-              </div>
-            </div>
-            <div className="flex grow shrink-0 basis-0 flex-col items-start gap-6 self-stretch rounded-md border border-solid border-neutral-border bg-default-background px-4 py-4 shadow-sm">
-              <div className="flex w-full grow shrink-0 basis-0 flex-col items-start gap-2">
-                <span className="text-body-bold font-body-bold text-default-font">
-                  What is the best way to manage state in React?
-                </span>
-                <span className="text-caption font-caption text-subtext-color">
-                  I&#39;m a beginner with React and I&#39;m confused about state
-                  management. Should I use context, Redux, or something else?
-                </span>
-              </div>
-              <div className="flex w-full grow shrink-0 basis-0 items-start gap-4">
-                <span className="text-caption font-caption text-subtext-color">
-                  3 days ago
-                </span>
-                <div className="flex items-center gap-1">
-                  <FeatherUser className="text-caption font-caption text-subtext-color" />
-                  <span className="text-caption font-caption text-subtext-color">
-                    143
-                  </span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <FeatherHeart className="text-caption font-caption text-subtext-color" />
-                  <span className="text-caption font-caption text-subtext-color">
-                    6
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="flex items-start gap-4">
-            <div className="flex grow shrink-0 basis-0 flex-col items-start gap-6 self-stretch rounded-md border border-solid border-neutral-border bg-default-background px-4 py-4 shadow-sm">
-              <div className="flex w-full grow shrink-0 basis-0 flex-col items-start gap-2">
-                <span className="text-body-bold font-body-bold text-default-font">
-                  How do I change the theme of my UI?
-                </span>
-                <span className="text-caption font-caption text-subtext-color">
-                  I would like to update the colors, text, and look and feel of
-                  my interface to something else using a theme. I was wondering
-                  where I go to find more themes.
-                </span>
-              </div>
-              <div className="flex w-full grow shrink-0 basis-0 items-start gap-4">
-                <span className="text-caption font-caption text-subtext-color">
-                  1 month ago
-                </span>
-                <div className="flex items-center gap-1">
-                  <FeatherUser className="text-caption font-caption text-subtext-color" />
-                  <span className="text-caption font-caption text-subtext-color">
-                    253
-                  </span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <FeatherHeart className="text-caption font-caption text-subtext-color" />
-                  <span className="text-caption font-caption text-subtext-color">
-                    4
-                  </span>
-                </div>
-              </div>
-            </div>
-            <div className="flex grow shrink-0 basis-0 flex-col items-start gap-6 self-stretch rounded-md border border-solid border-neutral-border bg-default-background px-4 py-4 shadow-sm">
-              <div className="flex w-full grow shrink-0 basis-0 flex-col items-start gap-2">
-                <span className="text-body-bold font-body-bold text-default-font">
-                  How do I change the theme of my UI?
-                </span>
-                <span className="text-caption font-caption text-subtext-color">
-                  I would like to update the colors, text, and look and feel of
-                  my interface to something else using a theme. I was wondering
-                  where I go to find more themes.
-                </span>
-              </div>
-              <div className="flex w-full grow shrink-0 basis-0 items-start gap-4">
-                <span className="text-caption font-caption text-subtext-color">
-                  1 month ago
-                </span>
-                <div className="flex items-center gap-1">
-                  <FeatherUser className="text-caption font-caption text-subtext-color" />
-                  <span className="text-caption font-caption text-subtext-color">
-                    253
-                  </span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <FeatherHeart className="text-caption font-caption text-subtext-color" />
-                  <span className="text-caption font-caption text-subtext-color">
-                    4
-                  </span>
-                </div>
-              </div>
-            </div>
-            <div className="flex grow shrink-0 basis-0 flex-col items-start gap-6 self-stretch rounded-md border border-solid border-neutral-border bg-default-background px-4 py-4 shadow-sm">
-              <div className="flex w-full grow shrink-0 basis-0 flex-col items-start gap-2">
-                <span className="text-body-bold font-body-bold text-default-font">
-                  What is the best way to manage state in React?
-                </span>
-                <span className="text-caption font-caption text-subtext-color">
-                  I&#39;m a beginner with React and I&#39;m confused about state
-                  management. Should I use context, Redux, or something else?
-                </span>
-              </div>
-              <div className="flex w-full grow shrink-0 basis-0 items-start gap-4">
-                <span className="text-caption font-caption text-subtext-color">
-                  3 days ago
-                </span>
-                <div className="flex items-center gap-1">
-                  <FeatherUser className="text-caption font-caption text-subtext-color" />
-                  <span className="text-caption font-caption text-subtext-color">
-                    143
-                  </span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <FeatherHeart className="text-caption font-caption text-subtext-color" />
-                  <span className="text-caption font-caption text-subtext-color">
-                    6
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
+          ))}
         </div>
       </div>
     </DefaultPageLayout>
