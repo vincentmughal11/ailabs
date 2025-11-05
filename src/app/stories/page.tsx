@@ -3,8 +3,8 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/ui/components/Button";
-import { IconButton } from "@/ui/components/IconButton";
 import { LinkButton } from "@/ui/components/LinkButton";
+import { SuggestStoryDialog } from "@/ui/components/SuggestStoryDialog";
 import { DefaultPageLayout } from "@/ui/layouts/DefaultPageLayout";
 import { FeatherHeart } from "@subframe/core";
 import { FeatherRocket } from "@subframe/core";
@@ -25,6 +25,7 @@ function Stories() {
   const router = useRouter();
   const [stories, setStories] = useState<Story[]>([]);
   const [loading, setLoading] = useState(true);
+  const [suggestDialogOpen, setSuggestDialogOpen] = useState(false);
 
   useEffect(() => {
     fetchStories();
@@ -80,14 +81,10 @@ function Stories() {
               <Button
                 variant="neutral-secondary"
                 icon={<FeatherZap />}
-                onClick={(event: React.MouseEvent<HTMLButtonElement>) => {}}
+                onClick={() => setSuggestDialogOpen(true)}
               >
                 Suggest
               </Button>
-              <IconButton
-                variant="brand-primary"
-                onClick={(event: React.MouseEvent<HTMLButtonElement>) => {}}
-              />
             </div>
           </div>
           <div className="flex w-full flex-wrap items-center gap-2">
@@ -148,6 +145,10 @@ function Stories() {
           ))}
         </div>
       </div>
+      <SuggestStoryDialog
+        open={suggestDialogOpen}
+        onOpenChange={setSuggestDialogOpen}
+      />
     </DefaultPageLayout>
   );
 }

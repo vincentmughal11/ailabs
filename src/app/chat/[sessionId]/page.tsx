@@ -27,7 +27,6 @@ import { FeatherVerified } from "@subframe/core";
 import ReportDialog from "@/ui/components/ReportDialog";
 import { Badge } from "@/ui/components/Badge";
 import { Table } from "@/ui/components/Table";
-import ShareLeaderboardDialog from "@/ui/components/ShareLeaderboardDialog";
 
 interface Session {
   id: string;
@@ -84,14 +83,44 @@ function Chat() {
   const [generatingFirstTurn, setGeneratingFirstTurn] = useState(false);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const generatingRef = useRef(false);
+  const currentTurnIdRef = useRef<string | null>(null);
   const [reportOpen, setReportOpen] = useState(false);
-  const [shareOpen, setShareOpen] = useState(false);
 
   useEffect(() => {
     if (sessionId) {
       fetchSession();
     }
   }, [sessionId]);
+
+  // Initialize currentVote from the existing vote when session loads or turn changes
+  useEffect(() => {
+    if (session && session.turns.length > 0) {
+      const currentTurn = session.turns[session.turns.length - 1];
+      
+      // Check if we've moved to a new turn
+      const isNewTurn = currentTurnIdRef.current !== currentTurn.id;
+      
+      if (isNewTurn) {
+        // New turn - initialize currentVote from the turn's vote (if it exists)
+        currentTurnIdRef.current = currentTurn.id;
+        if (currentTurn.vote) {
+          setCurrentVote(currentTurn.vote as 'MODEL_A' | 'MODEL_B' | 'TIE');
+        } else {
+          // No vote on new turn - reset to null
+          setCurrentVote(null);
+        }
+      } else {
+        // Same turn - only initialize if we don't have a local vote set
+        // This allows user to change their selection before submitting
+        setCurrentVote(prev => {
+          if (currentTurn.vote && !prev) {
+            return currentTurn.vote as 'MODEL_A' | 'MODEL_B' | 'TIE';
+          }
+          return prev;
+        });
+      }
+    }
+  }, [session]);
 
   const fetchSession = async () => {
     try {
@@ -163,46 +192,19 @@ function Chat() {
     }
   };
 
-  const handleVote = async (vote: 'MODEL_A' | 'MODEL_B' | 'TIE') => {
+  const handleVote = (vote: 'MODEL_A' | 'MODEL_B' | 'TIE') => {
     if (!session || !session.turns.length) return;
 
     const currentTurn = session.turns[session.turns.length - 1];
-    console.log('🗳️ Voting:', { 
+    console.log('🗳️ Selecting vote:', { 
       turnId: currentTurn.id, 
       turnNumber: currentTurn.turnNumber, 
       vote, 
       currentVote: currentTurn.vote 
     });
-    
-    if (currentTurn.vote) {
-      console.log('⚠️ Already voted on this turn');
-      return; // Already voted
-    }
 
-    // Set the vote immediately for visual feedback
+    // Only update local state - don't submit to API yet
     setCurrentVote(vote);
-
-    try {
-      console.log('📡 Sending vote to API:', { turnId: currentTurn.id, vote });
-      const response = await fetch(`/api/turns/${currentTurn.id}/vote`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ vote }),
-      });
-
-      if (response.ok) {
-        console.log('✅ Vote recorded successfully');
-        // Refresh session data
-        await fetchSession();
-      } else {
-        console.error('❌ Vote API error:', await response.text());
-      }
-    } catch (error) {
-      console.error('❌ Error voting:', error);
-      setCurrentVote(null); // Reset on error
-    }
   };
 
   const handleChoiceSelect = (choiceIndex: number) => {
@@ -219,6 +221,29 @@ function Chat() {
       
       if (!selectedPrompt) return;
 
+      // First, submit the vote if one was selected and not already submitted
+      if (currentVote && !currentTurn.vote) {
+        console.log('📡 Submitting vote to API:', { turnId: currentTurn.id, vote: currentVote });
+        try {
+          const voteResponse = await fetch(`/api/turns/${currentTurn.id}/vote`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ vote: currentVote }),
+          });
+
+          if (voteResponse.ok) {
+            console.log('✅ Vote recorded successfully');
+          } else {
+            console.error('❌ Vote API error:', await voteResponse.text());
+          }
+        } catch (error) {
+          console.error('❌ Error submitting vote:', error);
+        }
+      }
+
+      // Then create the next turn
       const response = await fetch('/api/turns/create', {
         method: 'POST',
         headers: {
@@ -313,7 +338,6 @@ function Chat() {
   }
 
   const currentTurn = session.turns[session.turns.length - 1];
-  const hasVoted = currentTurn?.vote;
   const hasSelectedChoice = selectedChoice !== null;
   
   // Debug logging
@@ -436,7 +460,7 @@ function Chat() {
             </div>
           </div>
         </div>
-        {!hasVoted && currentTurn && (
+        {currentTurn && (
           <div className="flex w-full items-center justify-end gap-2">
             <Button
               className="h-8 grow shrink-0 basis-0"
@@ -643,17 +667,17 @@ function Chat() {
                     <Table.Row>
                       <Table.Cell>
                         <span className="whitespace-nowrap text-body font-body text-subtext-color">
-                          Total Rounds
+                          Votes
                         </span>
                       </Table.Cell>
                       <Table.Cell>
                         <span className="whitespace-nowrap text-body-bold font-body-bold text-default-font">
-                          {totalRounds}
+                          {aVotes}
                         </span>
                       </Table.Cell>
                       <Table.Cell>
                         <span className="whitespace-nowrap text-body font-body text-default-font">
-                          {totalRounds}
+                          {bVotes}
                         </span>
                       </Table.Cell>
                     </Table.Row>
@@ -685,9 +709,9 @@ function Chat() {
                   </Button>
                   <Button
                     icon={<FeatherShare2 />}
-                    onClick={() => setShareOpen(true)}
+                    onClick={() => router.push('/leaderboard')}
                   >
-                    Share Leaderboard
+                    Go to Leaderboard
                   </Button>
                 </div>
               </div>
@@ -695,13 +719,6 @@ function Chat() {
           );
         })()}
       </DialogLayout>
-      <ShareLeaderboardDialog
-        open={shareOpen}
-        onOpenChange={setShareOpen}
-        shareUrl={"http://localhost:3000/leaderboard"}
-        title={"Share AILabs Leaderboard"}
-        subtitle={"Copy the leaderboard link or share it on social"}
-      />
       <ReportDialog 
         open={reportOpen}
         onOpenChange={setReportOpen}

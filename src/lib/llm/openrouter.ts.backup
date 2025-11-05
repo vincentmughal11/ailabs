@@ -5,48 +5,12 @@ let openrouter: OpenAI | null = null
 
 function getOpenRouterClient(): OpenAI {
   if (!openrouter) {
-    const apiKey = process.env.OPENROUTER_API_KEY
-    
-    // Enhanced error checking with helpful debugging info
-    if (!apiKey) {
-      const errorMessage = [
-        'OPENROUTER_API_KEY is not defined in environment variables',
-        '',
-        'To fix this:',
-        '1. Create a .env.local file in the root directory of your project',
-        '2. Add: OPENROUTER_API_KEY=your_api_key_here',
-        '3. Restart your Next.js development server',
-        '',
-        'Note: In Next.js, environment variables are automatically loaded from .env.local, .env, etc.',
-        'Make sure the file is in the project root (same directory as package.json)'
-      ].join('\n')
-      
-      console.error('❌ OpenRouter Configuration Error:')
-      console.error(errorMessage)
-      console.error('Current env check:', {
-        hasKey: !!apiKey,
-        keyLength: apiKey?.length || 0,
-        nodeEnv: process.env.NODE_ENV,
-        allEnvKeys: Object.keys(process.env).filter(k => k.includes('OPEN') || k.includes('API'))
-      })
-      
-      throw new Error(errorMessage)
+    if (!process.env.OPENROUTER_API_KEY) {
+      throw new Error('OPENROUTER_API_KEY is not defined in environment variables')
     }
-    
-    // Validate API key format (should start with 'sk-' for OpenRouter)
-    if (!apiKey.startsWith('sk-') && !apiKey.startsWith('sk-or-')) {
-      console.warn('⚠️ OpenRouter API key format warning: Expected key to start with "sk-" or "sk-or-"')
-    }
-    
-    console.log('✅ OpenRouter client initialized successfully')
-    
     openrouter = new OpenAI({
       baseURL: "https://openrouter.ai/api/v1",
-      apiKey: apiKey,
-      defaultHeaders: {
-        "HTTP-Referer": process.env.OPENROUTER_REFERER || "https://github.com/your-repo",
-        "X-Title": process.env.OPENROUTER_APP_NAME || "AI Labs",
-      },
+      apiKey: process.env.OPENROUTER_API_KEY,
     })
   }
   return openrouter
@@ -99,33 +63,8 @@ export async function generateOpenRouterResponse(
       } : undefined
     }
   } catch (error) {
-    console.error('❌ OpenRouter API error:', error)
-    
-    // Enhanced error reporting
-    if (error instanceof Error) {
-      // Check for authentication errors
-      if (error.message.includes('401') || error.message.includes('Unauthorized')) {
-        console.error('🔑 Authentication failed. Check your OPENROUTER_API_KEY:')
-        console.error('  - Is the key correct?')
-        console.error('  - Is it set in .env.local?')
-        console.error('  - Did you restart the server after adding it?')
-      }
-      
-      // Check for API key format issues
-      if (error.message.includes('Invalid API key') || error.message.includes('API key')) {
-        console.error('🔑 API key validation failed. Verify:')
-        console.error('  - Key starts with "sk-" or "sk-or-"')
-        console.error('  - Key is not expired or revoked')
-        console.error('  - Key has proper permissions for OpenRouter')
-      }
-    }
-    
-    // Re-throw with more context
-    const errorMessage = error instanceof Error 
-      ? error.message 
-      : 'Unknown error occurred'
-    
-    throw new Error(`Failed to generate response from ${model}: ${errorMessage}`)
+    console.error('OpenRouter API error:', error)
+    throw new Error(`Failed to generate response from ${model}`)
   }
 }
 
@@ -224,14 +163,7 @@ Each choice should provide a complete, specific picture of what happened in the 
       }
     ]
   } catch (error) {
-    console.error('❌ Error generating next choices:', error)
-    
-    // Enhanced error reporting
-    if (error instanceof Error) {
-      if (error.message.includes('OPENROUTER_API_KEY')) {
-        console.error('🔑 Environment variable issue detected. Check your .env.local file.')
-      }
-    }
+    console.error('Error generating next choices:', error)
     
     // Fallback choices
     return [
@@ -338,14 +270,7 @@ Each choice should provide a clear resolution path while staying true to the sto
       }
     ]
   } catch (error) {
-    console.error('❌ Error generating final choices:', error)
-    
-    // Enhanced error reporting
-    if (error instanceof Error) {
-      if (error.message.includes('OPENROUTER_API_KEY')) {
-        console.error('🔑 Environment variable issue detected. Check your .env.local file.')
-      }
-    }
+    console.error('Error generating final choices:', error)
     
     // Fallback choices
     return [
@@ -367,4 +292,3 @@ Each choice should provide a clear resolution path while staying true to the sto
     ]
   }
 }
-

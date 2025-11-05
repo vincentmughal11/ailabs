@@ -118,3 +118,12 @@ model Report {
   session   Session   @relation(fields: [sessionId], references: [id])
   turn      Turn      @relation(fields: [turnId], references: [id])
 }
+
+model StorySuggestion {
+  id            String   @id @default(uuid())
+  title         String
+  description   String
+  category      String
+  agreedToTerms Boolean  @map("agreed_to_terms")
+  createdAt     DateTime @default(now()) @map("created_at")
+}

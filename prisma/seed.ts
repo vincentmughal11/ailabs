@@ -137,279 +137,125 @@ async function main() {
     })
   ])
 
-  // Create 30 OpenRouter models
-  const models = await Promise.all([
-    prisma.model.create({
-      data: {
-        name: "google/gemini-2.5-pro",
-        displayName: "Gemini 2.5 Pro",
-        eloRating: 1500,
-        lastWeekElo: 1500,
-        apiKeyEnvVar: "OPENROUTER_API_KEY"
-      }
-    }),
-    prisma.model.create({
-      data: {
-        name: "anthropic/claude-opus-4.1",
-        displayName: "Claude Opus 4.1",
-        eloRating: 1500,
-        lastWeekElo: 1500,
-        apiKeyEnvVar: "OPENROUTER_API_KEY"
-      }
-    }),
-    prisma.model.create({
-      data: {
-        name: "anthropic/claude-sonnet-4.5",
-        displayName: "Claude Sonnet 4.5",
-        eloRating: 1500,
-        lastWeekElo: 1500,
-        apiKeyEnvVar: "OPENROUTER_API_KEY"
-      }
-    }),
-    prisma.model.create({
-      data: {
-        name: "openrouter/gpt-4.5",
-        displayName: "GPT-4.5",
-        eloRating: 1500,
-        lastWeekElo: 1500,
-        apiKeyEnvVar: "OPENROUTER_API_KEY"
-      }
-    }),
-    prisma.model.create({
-      data: {
-        name: "openai/chatgpt-4o-latest",
-        displayName: "ChatGPT-4o Latest",
-        eloRating: 1500,
-        lastWeekElo: 1500,
-        apiKeyEnvVar: "OPENROUTER_API_KEY"
-      }
-    }),
-    prisma.model.create({
-      data: {
-        name: "openai/o3",
-        displayName: "O3",
-        eloRating: 1500,
-        lastWeekElo: 1500,
-        apiKeyEnvVar: "OPENROUTER_API_KEY"
-      }
-    }),
-    prisma.model.create({
-      data: {
-        name: "openai/gpt-5",
-        displayName: "GPT-5 High",
-        eloRating: 1500,
-        lastWeekElo: 1500,
-        apiKeyEnvVar: "OPENROUTER_API_KEY"
-      }
-    }),
-    prisma.model.create({
-      data: {
-        name: "qwen/qwen3-max",
-        displayName: "Qwen3 Max",
-        eloRating: 1500,
-        lastWeekElo: 1500,
-        apiKeyEnvVar: "OPENROUTER_API_KEY"
-      }
-    }),
-    prisma.model.create({
-      data: {
-        name: "openai/gpt-5-chat",
-        displayName: "GPT-5 Chat",
-        eloRating: 1500,
-        lastWeekElo: 1500,
-        apiKeyEnvVar: "OPENROUTER_API_KEY"
-      }
-    }),
-    prisma.model.create({
-      data: {
-        name: "z-ai/glm-4.6",
-        displayName: "GLM-4.6",
-        eloRating: 1500,
-        lastWeekElo: 1500,
-        apiKeyEnvVar: "OPENROUTER_API_KEY"
-      }
-    }),
-    prisma.model.create({
-      data: {
-        name: "x-ai/grok-4-fast",
-        displayName: "Grok-4 Fast",
-        eloRating: 1500,
-        lastWeekElo: 1500,
-        apiKeyEnvVar: "OPENROUTER_API_KEY"
-      }
-    }),
-    prisma.model.create({
-      data: {
-        name: "anthropic/claude-opus-4",
-        displayName: "Claude Opus 4",
-        eloRating: 1500,
-        lastWeekElo: 1500,
-        apiKeyEnvVar: "OPENROUTER_API_KEY"
-      }
-    }),
-    prisma.model.create({
-      data: {
-        name: "deepseek/deepseek-chat-v3-0324",
-        displayName: "DeepSeek V3 0324",
-        eloRating: 1500,
-        lastWeekElo: 1500,
-        apiKeyEnvVar: "OPENROUTER_API_KEY"
-      }
-    }),
-    prisma.model.create({
-      data: {
-        name: "qwen/qwen3-vl-235b-a22b-instruct",
-        displayName: "Qwen3 VL 235B",
-        eloRating: 1500,
-        lastWeekElo: 1500,
-        apiKeyEnvVar: "OPENROUTER_API_KEY"
-      }
-    }),
-    prisma.model.create({
-      data: {
-        name: "qwen/qwen3-235b-a22b-2507",
-        displayName: "Qwen3 235B",
-        eloRating: 1500,
-        lastWeekElo: 1500,
-        apiKeyEnvVar: "OPENROUTER_API_KEY"
-      }
-    }),
-    prisma.model.create({
-      data: {
-        name: "deepseek/deepseek-r1-0528",
-        displayName: "DeepSeek R1",
-        eloRating: 1500,
-        lastWeekElo: 1500,
-        apiKeyEnvVar: "OPENROUTER_API_KEY"
-      }
-    }),
-    prisma.model.create({
-      data: {
-        name: "moonshotai/kimi-k2",
-        displayName: "Kimi K2",
-        eloRating: 1500,
-        lastWeekElo: 1500,
-        apiKeyEnvVar: "OPENROUTER_API_KEY"
-      }
-    }),
-    prisma.model.create({
-      data: {
-        name: "deepseek/deepseek-v3.1-terminus",
-        displayName: "DeepSeek V3.1 Terminus",
-        eloRating: 1500,
-        lastWeekElo: 1500,
-        apiKeyEnvVar: "OPENROUTER_API_KEY"
-      }
-    }),
-    prisma.model.create({
-      data: {
-        name: "x-ai/grok-4",
-        displayName: "Grok-4",
-        eloRating: 1500,
-        lastWeekElo: 1500,
-        apiKeyEnvVar: "OPENROUTER_API_KEY"
-      }
-    }),
-    prisma.model.create({
-      data: {
-        name: "deepseek/deepseek-v3.2-exp",
-        displayName: "DeepSeek V3.2 Exp",
-        eloRating: 1500,
-        lastWeekElo: 1500,
-        apiKeyEnvVar: "OPENROUTER_API_KEY"
-      }
-    }),
-    prisma.model.create({
-      data: {
-        name: "qwen/qwen3-next-80b-a3b-instruct",
-        displayName: "Qwen3 Next 80B",
-        eloRating: 1500,
-        lastWeekElo: 1500,
-        apiKeyEnvVar: "OPENROUTER_API_KEY"
-      }
-    }),
-    prisma.model.create({
-      data: {
-        name: "qwen/qwen3-235b-a22b-thinking-2507",
-        displayName: "Qwen3 235B Thinking",
-        eloRating: 1500,
-        lastWeekElo: 1500,
-        apiKeyEnvVar: "OPENROUTER_API_KEY"
-      }
-    }),
-    prisma.model.create({
-      data: {
-        name: "qwen/qwen3-235b-a22b-04-28",
-        displayName: "Qwen3 235B No Thinking",
-        eloRating: 1500,
-        lastWeekElo: 1500,
-        apiKeyEnvVar: "OPENROUTER_API_KEY"
-      }
-    }),
-    prisma.model.create({
-      data: {
-        name: "openai/gpt-5-mini",
-        displayName: "GPT-5 Mini",
-        eloRating: 1500,
-        lastWeekElo: 1500,
-        apiKeyEnvVar: "OPENROUTER_API_KEY"
-      }
-    }),
-    prisma.model.create({
-      data: {
-        name: "z-ai/glm-4.5",
-        displayName: "GLM-4.5",
-        eloRating: 1500,
-        lastWeekElo: 1500,
-        apiKeyEnvVar: "OPENROUTER_API_KEY"
-      }
-    }),
-    prisma.model.create({
-      data: {
-        name: "google/gemini-2.5-flash-preview-09-2025",
-        displayName: "Gemini 2.5 Flash",
-        eloRating: 1500,
-        lastWeekElo: 1500,
-        apiKeyEnvVar: "OPENROUTER_API_KEY"
-      }
-    }),
-    prisma.model.create({
-      data: {
-        name: "anthropic/claude-3.5-sonnet",
-        displayName: "Claude 3.5 Sonnet",
-        eloRating: 1500,
-        lastWeekElo: 1500,
-        apiKeyEnvVar: "OPENROUTER_API_KEY"
-      }
-    }),
-    prisma.model.create({
-      data: {
-        name: "openai/gpt-4o",
-        displayName: "GPT-4o",
-        eloRating: 1500,
-        lastWeekElo: 1500,
-        apiKeyEnvVar: "OPENROUTER_API_KEY"
-      }
-    }),
-    prisma.model.create({
-      data: {
-        name: "anthropic/claude-3-opus",
-        displayName: "Claude 3 Opus",
-        eloRating: 1500,
-        lastWeekElo: 1500,
-        apiKeyEnvVar: "OPENROUTER_API_KEY"
-      }
-    }),
-    prisma.model.create({
-      data: {
-        name: "meta-llama/llama-3.1-405b-instruct",
-        displayName: "Llama 3.1 405B",
-        eloRating: 1500,
-        lastWeekElo: 1500,
-        apiKeyEnvVar: "OPENROUTER_API_KEY"
-      }
-    })
-  ])
+  // Helper function to generate display names from OpenRouter model names
+  function getDisplayName(modelName: string): string {
+    const parts = modelName.split('/')
+    const provider = parts[0]
+    const model = parts[1]
+    
+    // Handle specific model name formatting
+    const modelMap: Record<string, string> = {
+      'perplexity/sonar-pro-search': 'Perplexity Sonar Pro Search',
+      'minimax/minimax-m2': 'MiniMax M2',
+      'anthropic/claude-haiku-4.5': 'Claude Haiku 4.5',
+      'openai/gpt-5': 'GPT-5',
+      'openai/gpt-5-mini': 'GPT-5 Mini',
+      'openai/gpt-oss-120b': 'GPT-OSS 120B',
+      'openai/gpt-oss-20b': 'GPT-OSS 20B',
+      'openai/gpt-4.1-mini': 'GPT-4.1 Mini',
+      'openai/gpt-4o-mini': 'GPT-4o Mini',
+      'anthropic/claude-sonnet-4.5': 'Claude Sonnet 4.5',
+      'anthropic/claude-sonnet-4': 'Claude Sonnet 4',
+      'google/gemini-2.5-flash-preview-09-2025': 'Gemini 2.5 Flash Preview',
+      'google/gemini-2.5-flash-lite': 'Gemini 2.5 Flash Lite',
+      'google/gemini-2.5-pro': 'Gemini 2.5 Pro',
+      'x-ai/grok-4-fast': 'Grok 4 Fast',
+      'x-ai/grok-code-fast-1': 'Grok Code Fast',
+      'x-ai/grok-3': 'Grok 3',
+      'cohere/command-r7b-12-2024': 'Cohere Command R7B',
+      'google/gemini-2.0-flash-001': 'Gemini 2.0 Flash',
+      'deepseek/deepseek-chat-v3-0324': 'DeepSeek Chat V3',
+      'z-ai/glm-4.6': 'GLM-4.6',
+      'deepseek/deepseek-chat-v3.1': 'DeepSeek Chat V3.1',
+      'qwen/qwen3-235b-a22b-2507': 'Qwen3 235B',
+      'mistralai/mistral-nemo': 'Mistral Nemo',
+      'deepseek/deepseek-v3.2-exp': 'DeepSeek V3.2 Experimental',
+      'anthropic/claude-3.7-sonnet': 'Claude 3.7 Sonnet',
+      'meta-llama/llama-4-maverick': 'Llama 4 Maverick',
+      'meta-llama/llama-3.3-70b-instruct': 'Llama 3.3 70B',
+      'x-ai/grok-3-mini': 'Grok 3 Mini',
+      'qwen/qwen3-next-80b-a3b-instruct': 'Qwen3 Next 80B',
+      'mistralai/codestral-2508': 'Codestral',
+      'moonshotai/kimi-k2': 'Kimi K2',
+      'tngtech/deepseek-r1t2-chimera': 'DeepSeek R1T2 Chimera',
+      'perplexity/sonar-deep-research': 'Perplexity Sonar Deep Research',
+      'amazon/nova-premier-v1': 'Amazon Nova Premier',
+      'amazon/nova-pro-v1': 'Amazon Nova Pro',
+      'microsoft/wizardlm-2-8x22b': 'WizardLM 2 8x22B',
+      'morph/morph-v3-large': 'Morph V3 Large',
+      'inclusionai/ling-1t': 'Ling 1T',
+    }
+    
+    if (modelMap[modelName]) {
+      return modelMap[modelName]
+    }
+    
+    // Fallback: format the model name nicely
+    return model
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ')
+  }
+
+  // Create OpenRouter models - starting from 0 models and building up
+  const modelNames = [
+    // Original models
+    "perplexity/sonar-pro-search",
+    "minimax/minimax-m2",
+    "anthropic/claude-haiku-4.5",
+    "openai/gpt-5",
+    "openai/gpt-5-mini",
+    "openai/gpt-oss-120b",
+    "openai/gpt-oss-20b",
+    "openai/gpt-4.1-mini",
+    "openai/gpt-4o-mini",
+    "anthropic/claude-sonnet-4.5",
+    "anthropic/claude-sonnet-4",
+    "google/gemini-2.5-flash-preview-09-2025",
+    "google/gemini-2.5-flash-lite",
+    "google/gemini-2.5-pro",
+    "x-ai/grok-4-fast",
+    "x-ai/grok-code-fast-1",
+    "x-ai/grok-3",
+    "cohere/command-r7b-12-2024",
+    // New models (skipping duplicates)
+    "google/gemini-2.0-flash-001",
+    "deepseek/deepseek-chat-v3-0324",
+    "z-ai/glm-4.6",
+    "deepseek/deepseek-chat-v3.1",
+    "qwen/qwen3-235b-a22b-2507",
+    "mistralai/mistral-nemo",
+    "deepseek/deepseek-v3.2-exp",
+    "anthropic/claude-3.7-sonnet",
+    "meta-llama/llama-4-maverick",
+    "meta-llama/llama-3.3-70b-instruct",
+    "x-ai/grok-3-mini",
+    "qwen/qwen3-next-80b-a3b-instruct",
+    "mistralai/codestral-2508",
+    "moonshotai/kimi-k2",
+    "tngtech/deepseek-r1t2-chimera",
+    "perplexity/sonar-deep-research",
+    "amazon/nova-premier-v1",
+    "amazon/nova-pro-v1",
+    "microsoft/wizardlm-2-8x22b",
+    "morph/morph-v3-large",
+    "inclusionai/ling-1t"
+  ]
+
+  const models = await Promise.all(
+    modelNames.map(modelName =>
+      prisma.model.create({
+        data: {
+          name: modelName,
+          displayName: getDisplayName(modelName),
+          eloRating: 1500,
+          lastWeekElo: 1500,
+          apiKeyEnvVar: "OPENROUTER_API_KEY",
+          apiEndpoint: null // All models use OpenRouter (configured in code)
+        }
+      })
+    )
+  )
 
   console.log('Seeded stories:', stories.length)
   console.log('Seeded models:', models.length)
